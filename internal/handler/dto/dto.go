@@ -1,4 +1,10 @@
-package model
+package dto
+
+type Token string
+
+type ErrorResponse struct {
+	Message string `json:"message"`
+}
 
 type RegisterRequest struct {
 	Email    string `json:"email"`
@@ -11,8 +17,11 @@ type RegisterResponse struct {
 	Role  string `json:"role"`
 }
 
-type ErrorResponse struct {
-	Message string `json:"message"`
+type DummyRequest struct {
+	Role string `json:"role"`
 }
 
-type Token string
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}

@@ -2,14 +2,15 @@ package service
 
 import (
 	"context"
-	"log/slog"
-	"pvz/internal/middleware"
-	"pvz/internal/middleware/mapper"
+	"fmt"
+
+	middleware "pvz/internal/middleware/auth"
 	"pvz/internal/model"
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, user model.User) (string, error)
+	CreateUser(ctx context.Context, user model.User) (model.User, error)
+	FindByEmail(ctx context.Context, email string) (model.User, error)
 }
 
 type AuthService struct {
@@ -20,26 +21,35 @@ func NewAuthService(u UserRepository) *AuthService {
 	return &AuthService{userRepo: u}
 }
 
-func (s *AuthService) Register(ctx context.Context, req model.RegisterRequest) (*model.RegisterResponse, error) {
-	// Хэшируем пароль
-	hashedPassword, err := middleware.GeneratePasswordHash(req.Password)
+func (s *AuthService) CreateUser(ctx context.Context, user model.User) (model.User, error) {
+	return s.userRepo.CreateUser(ctx, user)
+}
+
+func (s *AuthService) DummyToken(ctx context.Context, role string) (string, error) {
+	token, err := middleware.GenerateJWT(role)
 	if err != nil {
-		slog.Warn("failed to hash password", "error", err)
-		return nil, err
+		return "", err
+	}
+	return token, nil
+}
+
+func (s *AuthService) LoginUser(ctx context.Context, user model.User) (string, error) {
+	// 1. Найти пользователя по email
+	storedUser, err := s.userRepo.FindByEmail(ctx, user.Email)
+	if err != nil {
+		return "", fmt.Errorf("invalid email or password") // обобщённо, чтобы не палить детали
 	}
 
-	// Преобразуем RegisterRequest в User (используем маппер)
-	user := mapper.RegisterRequestToUser(req, hashedPassword) // передаём []byte
-
-	// Сохраняем в БД
-	id, err := s.userRepo.CreateUser(ctx, user)
-	if err != nil {
-		slog.Error("failed to create user", "error", err)
-		return nil, err
+	// 2. Проверить пароль через bcrypt
+	if !middleware.CheckPasswordHash(user.Password, storedUser.Password) {
+		return "", fmt.Errorf("invalid email or password")
 	}
 
-	user.ID = id
-	// Преобразуем User в RegisterResponse (используем маппер)
-	resp := mapper.UserToRegisterResponse(user)
-	return &resp, nil
+	// 3. Генерация токена по роли
+	token, err := middleware.GenerateJWT(storedUser.Role)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
