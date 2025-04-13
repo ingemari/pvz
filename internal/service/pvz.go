@@ -8,6 +8,7 @@ import (
 
 type PvzRepository interface {
 	CreatePvz(ctx context.Context, pvz model.Pvz) (model.Pvz, error)
+	IsPvz(ctx context.Context, pvz model.Pvz) (bool, error)
 }
 
 type PvzService struct {

@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"log/slog"
-	"pvz/internal/mapper"
 	"pvz/internal/model"
 	"pvz/internal/repository/entities"
 
@@ -20,7 +19,7 @@ func NewUserRepository(db *pgxpool.Pool, logger *slog.Logger) *UserRepository {
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user model.User) (model.User, error) {
-	ent := mapper.UserToEntity(user)
+	ent := entities.UserToEntity(user)
 
 	query := `
 		INSERT INTO users (email, password, role)
@@ -33,12 +32,17 @@ func (r *UserRepository) CreateUser(ctx context.Context, user model.User) (model
 		return model.User{}, err
 	}
 
-	createdUser := mapper.EntityToUser(ent)
+	createdUser := entities.EntityToUser(ent)
 	return createdUser, nil
 }
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (model.User, error) {
-	query := `SELECT id, email, password, role FROM users WHERE email = $1`
+	query := `
+		SELECT id, email, password, role 
+		FROM users 
+		WHERE email = $1
+	`
+
 	var ent entities.User
 
 	err := r.db.QueryRow(ctx, query, email).Scan(&ent.Id, &ent.Email, &ent.Password, &ent.Role)
@@ -47,5 +51,5 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (model.U
 		return model.User{}, err
 	}
 
-	return mapper.EntityToUser(ent), nil
+	return entities.EntityToUser(ent), nil
 }

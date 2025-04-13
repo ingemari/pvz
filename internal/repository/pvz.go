@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"log/slog"
-	"pvz/internal/mapper"
 	"pvz/internal/model"
+	"pvz/internal/repository/entities"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,7 +19,7 @@ func NewPvzRepository(db *pgxpool.Pool, logger *slog.Logger) *PvzRepository {
 }
 
 func (r *PvzRepository) CreatePvz(ctx context.Context, pvz model.Pvz) (model.Pvz, error) {
-	ent := mapper.PvzToEntity(pvz)
+	ent := entities.PvzToEntity(pvz)
 
 	query := `
 		INSERT INTO pvz (city)
@@ -33,6 +33,21 @@ func (r *PvzRepository) CreatePvz(ctx context.Context, pvz model.Pvz) (model.Pvz
 		return model.Pvz{}, err
 	}
 
-	pvz = mapper.EntityToPvz(ent)
+	pvz = entities.EntityToPvz(ent)
 	return pvz, nil
+}
+
+func (r *PvzRepository) IsPvz(ctx context.Context, pvz model.Pvz) (bool, error) {
+	id := pvz.Id // ENTITTY!!!
+
+	query := `
+		SELECT id
+		FROM pvz
+		WHERE id = $1
+	`
+	row := r.db.QueryRow(ctx, query, id)
+	if row != nil {
+		return true, nil
+	}
+	return false, nil
 }

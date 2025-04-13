@@ -25,13 +25,3 @@ type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
-type PvzCreateRequest struct {
-	City string `json:"city"`
-}
-
-type PvzCreateResponse struct {
-	Id      string `json:"id"`
-	RegDate string `json:"registrationDate"`
-	City    string `json:"city"`
-}

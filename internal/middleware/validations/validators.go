@@ -38,3 +38,11 @@ func IsValidCity(city string) bool {
 		return false
 	}
 }
+
+func IsValidStatus(s string) bool {
+	if s == "in_progress" || s == "close" {
+		return true
+	} else {
+		return false
+	}
+}

@@ -13,7 +13,7 @@ CREATE TABLE pvz (
 
 CREATE TABLE receptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  date_time TIMESTAMPTZ NOT NULL,
+  date_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   pvz_id UUID NOT NULL REFERENCES pvz(id) ON DELETE CASCADE,
   status VARCHAR(256) NOT NULL CHECK (status IN ('in_progress', 'close'))
 );

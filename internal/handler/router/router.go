@@ -17,12 +17,15 @@ func SetupRouter(db *pgxpool.Pool, logger *slog.Logger) *gin.Engine {
 	// repo
 	userRepo := repository.NewUserRepository(db, logger)
 	pvzRepo := repository.NewPvzRepository(db, logger)
+	receptionRepo := repository.NewReceptionRepository(db, logger)
 	// service
 	authService := service.NewAuthService(userRepo, logger)
 	pvzService := service.NewPvzService(pvzRepo, logger)
+	receptionService := service.NewReceptionService(receptionRepo, pvzRepo, logger)
 	// handler
 	authHandler := handler.NewAuthHandler(authService, logger)
 	pvzHandler := handler.NewPvzHandler(pvzService, logger)
+	receptionHandler := handler.NewReceptionHandler(receptionService, logger)
 
 	// open routes
 	router.POST("/register", authHandler.HandleRegister)
@@ -33,6 +36,7 @@ func SetupRouter(db *pgxpool.Pool, logger *slog.Logger) *gin.Engine {
 	protected.Use(middleware.RequireAuth())
 	// protecred routes
 	protected.POST("/pvz", middleware.RequireRole("moderator"), pvzHandler.HandleCreatePvz)
+	protected.POST("/receptions", middleware.RequireRole("employee"), receptionHandler.HandleReceptionCreate)
 
 	logger.Info("Create user endpoint registered")
 	return router
