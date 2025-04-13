@@ -20,3 +20,13 @@ func IsValidRole(role string) bool {
 		return false
 	}
 }
+
+func IsValidPassword(p string) bool {
+	if len(p) < 8 {
+		return false
+	}
+	hasLetter := regexp.MustCompile(`[A-Za-z]`).MatchString(p)
+	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(p)
+
+	return hasLetter && hasNumber
+}

@@ -12,11 +12,12 @@ import (
 )
 
 type UserRepository struct {
-	db *pgxpool.Pool
+	db     *pgxpool.Pool
+	logger *slog.Logger
 }
 
-func NewUserRepository(db *pgxpool.Pool) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *pgxpool.Pool, logger *slog.Logger) *UserRepository {
+	return &UserRepository{db: db, logger: logger}
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user model.User) (model.User, error) {
@@ -30,7 +31,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user model.User) (model
 	var id uuid.UUID
 	err := r.db.QueryRow(ctx, query, ent.Email, ent.Password, ent.Role).Scan(&id)
 	if err != nil {
-		slog.Error("Failed to create user on storage layer", "err", err)
+		r.logger.Error("Failed to create user (already exist)")
 		return model.User{}, err
 	}
 
@@ -46,7 +47,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (model.U
 
 	err := r.db.QueryRow(ctx, query, email).Scan(&ent.ID, &ent.Email, &ent.Password, &ent.Role)
 	if err != nil {
-		slog.Error("Failed to find user by email", "err", err)
+		r.logger.Error("Failed to find user", "email", email)
 		return model.User{}, err
 	}
 

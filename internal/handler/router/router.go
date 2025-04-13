@@ -13,10 +13,14 @@ import (
 func SetupRouter(db *pgxpool.Pool, logger *slog.Logger) *gin.Engine {
 	router := gin.Default()
 
-	userRepo := repository.NewUserRepository(db)
-	authService := service.NewAuthService(userRepo)
-	authHandler := handler.NewAuthHandler(authService)
+	// repo
+	userRepo := repository.NewUserRepository(db, logger)
+	// service
+	authService := service.NewAuthService(userRepo, logger)
+	// handler
+	authHandler := handler.NewAuthHandler(authService, logger)
 
+	// routes
 	router.POST("/register", authHandler.HandleRegister)
 	router.POST("/dummyLogin", authHandler.HandleDummy)
 	router.POST("/login", authHandler.HandleLogin)

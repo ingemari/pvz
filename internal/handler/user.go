@@ -21,23 +21,32 @@ type AuthService interface {
 
 type AuthHandler struct {
 	authService AuthService
+	logger      *slog.Logger
 }
 
-func NewAuthHandler(as AuthService) *AuthHandler {
-	return &AuthHandler{authService: as}
+func NewAuthHandler(as AuthService, logger *slog.Logger) *AuthHandler {
+	return &AuthHandler{authService: as, logger: logger}
 }
 
 func (h *AuthHandler) HandleLogin(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: err.Error()})
+		h.logger.Error("Invalid requst LOGIN")
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Invalid request format"})
 		return
 	}
 
 	// Валидация email
 	if !validations.IsValidEmail(req.Email) {
-		slog.Error("Fail email validations")
+		h.logger.Error("Fail email validations LOGIN")
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Invalid email format"})
+		return
+	}
+
+	// Легкая валидация данных
+	if len(req.Password) < 6 {
+		h.logger.Error("Fail password validations LOGIN")
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Password must be at least 6 characters"})
 		return
 	}
 
@@ -46,10 +55,12 @@ func (h *AuthHandler) HandleLogin(c *gin.Context) {
 
 	token, err := h.authService.LoginUser(c.Request.Context(), model)
 	if err != nil {
+		h.logger.Error("Fail auth user LOGIN")
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Message: err.Error()})
 		return
 	}
 
+	h.logger.Info("SUCCESS LOGIN", "user", req.Email)
 	c.JSON(http.StatusOK, dto.Token(token))
 
 }
@@ -58,25 +69,27 @@ func (h *AuthHandler) HandleDummy(c *gin.Context) {
 	var req dto.DummyRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("DummyLogin bad req")
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: err.Error()})
 		return
 	}
 
 	// Валидация role
 	if !validations.IsValidRole(req.Role) {
-		slog.Error("Fail role validations")
+		h.logger.Error("Fail role validations")
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Invalid role"})
 		return
 	}
 
 	token, err := h.authService.DummyToken(c.Request.Context(), req.Role)
 	if err != nil {
+		h.logger.Error("Fail dummy token")
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Message: err.Error()})
 		return
 	}
 
+	h.logger.Info("SUCCESS Dummy")
 	c.JSON(http.StatusOK, dto.Token(token))
-
 }
 
 func (h *AuthHandler) HandleRegister(c *gin.Context) {
@@ -84,27 +97,36 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 	var resp dto.RegisterResponse
 
 	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Register bad req")
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: err.Error()})
-		return
-	}
-
-	hpass, err := middleware.GeneratePasswordHash(req.Password)
-	if err != nil {
-		slog.Warn("failed to hash password", "error", err)
 		return
 	}
 
 	// Валидация email
 	if !validations.IsValidEmail(req.Email) {
-		slog.Error("Fail email validations")
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Invalid email format"})
+		h.logger.Error("Fail email validations")
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Invalid email"})
 		return
 	}
 
 	// Валидация role
 	if !validations.IsValidRole(req.Role) {
-		slog.Error("Fail role validations")
+		h.logger.Error("Fail role validations")
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Invalid role"})
+		return
+	}
+
+	// Валидация pass
+	if !validations.IsValidPassword(req.Password) {
+		h.logger.Error("Fail pass validations")
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Message: "Invalid pass"})
+		return
+	}
+
+	hpass, err := middleware.GeneratePasswordHash(req.Password)
+	if err != nil {
+		h.logger.Error("failed to HASH password REGISTER")
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Message: "Fail to hash password"})
 		return
 	}
 
@@ -113,11 +135,13 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 
 	m, err := h.authService.CreateUser(c.Request.Context(), model)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Message: err.Error()})
+		h.logger.Error("Failed to create user", "user", req.Email)
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Message: "User already exist"})
 		return
 	}
 
 	resp = mapper.UserToRegisterResponse(m)
 
-	c.JSON(http.StatusOK, resp)
+	h.logger.Info("SUCCESS REGISTER", "user", req.Email)
+	c.JSON(http.StatusCreated, resp)
 }
