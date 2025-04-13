@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"pvz/internal/model"
 	"pvz/internal/repository/entities"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,15 +25,15 @@ func (r *ReceptionRepository) GetStatus(ctx context.Context, reception model.Rec
 
 	query := `
 		SELECT status
-		FROM reception
+		FROM receptions
 		WHERE pvz_id = $1
 		ORDER BY date_time DESC
 		LIMIT 1
 	`
 
 	err := r.db.QueryRow(ctx, query, ent.PvzId).Scan(&ent.Status)
-	if err != nil {
-		r.logger.Error("Failed to create reception", "pvzID", ent.PvzId)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		r.logger.Error("Failed to create reception STATUS", "pvzID", ent.PvzId)
 		return "", err
 	}
 
@@ -43,14 +45,14 @@ func (r *ReceptionRepository) CreateReception(ctx context.Context, reception mod
 	ent.Status = "in_progress"
 
 	query := `
-		INSERT INTO reception (pvz_id, status)
+		INSERT INTO receptions (pvz_id, status)
 		VALUES ($1, $2)
 		RETURNING id, date_time
 	`
 
 	err := r.db.QueryRow(ctx, query, ent.PvzId, ent.Status).Scan(&ent.Id, &ent.DateTime)
 	if err != nil {
-		r.logger.Error("Failed to create reception", "pvz_id", ent.PvzId)
+		r.logger.Error("Failed to create reception CREATE", "pvz_id", ent.PvzId)
 		return model.Reception{}, err
 	}
 
