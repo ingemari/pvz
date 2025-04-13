@@ -46,7 +46,7 @@ func (s *AuthService) LoginUser(ctx context.Context, user model.User) (string, e
 
 	// 2. Проверить пароль через bcrypt
 	if !middleware.CheckPasswordHash(user.Password, storedUser.Password) {
-		s.logger.Error("Incorrect pass", "user", storedUser.ID)
+		s.logger.Error("Incorrect pass", "user", storedUser.Id)
 		return "", fmt.Errorf("invalid email or password") // чтобы не палить детали
 	}
 

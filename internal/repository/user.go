@@ -7,7 +7,6 @@ import (
 	"pvz/internal/model"
 	"pvz/internal/repository/entities"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,14 +27,11 @@ func (r *UserRepository) CreateUser(ctx context.Context, user model.User) (model
 		VALUES ($1, $2, $3)
 		RETURNING id
 	`
-	var id uuid.UUID
-	err := r.db.QueryRow(ctx, query, ent.Email, ent.Password, ent.Role).Scan(&id)
+	err := r.db.QueryRow(ctx, query, ent.Email, ent.Password, ent.Role).Scan(&ent.Id)
 	if err != nil {
 		r.logger.Error("Failed to create user (already exist)")
 		return model.User{}, err
 	}
-
-	ent.ID = id
 
 	createdUser := mapper.EntityToUser(ent)
 	return createdUser, nil
@@ -45,7 +41,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (model.U
 	query := `SELECT id, email, password, role FROM users WHERE email = $1`
 	var ent entities.User
 
-	err := r.db.QueryRow(ctx, query, email).Scan(&ent.ID, &ent.Email, &ent.Password, &ent.Role)
+	err := r.db.QueryRow(ctx, query, email).Scan(&ent.Id, &ent.Email, &ent.Password, &ent.Role)
 	if err != nil {
 		r.logger.Error("Failed to find user", "email", email)
 		return model.User{}, err

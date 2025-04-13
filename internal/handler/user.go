@@ -132,15 +132,14 @@ func (h *AuthHandler) HandleRegister(c *gin.Context) {
 
 	// маппим в модель
 	model := mapper.RegisterRequestToUser(req, hpass)
-
-	m, err := h.authService.CreateUser(c.Request.Context(), model)
+	model, err = h.authService.CreateUser(c.Request.Context(), model)
 	if err != nil {
 		h.logger.Error("Failed to create user", "user", req.Email)
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Message: "User already exist"})
 		return
 	}
 
-	resp = mapper.UserToRegisterResponse(m)
+	resp = mapper.UserToRegisterResponse(model)
 
 	h.logger.Info("SUCCESS REGISTER", "user", req.Email)
 	c.JSON(http.StatusCreated, resp)

@@ -21,10 +21,10 @@ func UserToEntity(user model.User) entities.User {
 	var id uuid.UUID
 	var err error
 
-	if user.ID == "" {
+	if user.Id == "" {
 		id = uuid.New()
 	} else {
-		id, err = uuid.Parse(user.ID)
+		id, err = uuid.Parse(user.Id)
 		if err != nil {
 			slog.Error("parse UUID", "err", err)
 			id = uuid.New()
@@ -32,7 +32,7 @@ func UserToEntity(user model.User) entities.User {
 	}
 
 	return entities.User{
-		ID:       id,
+		Id:       id,
 		Email:    user.Email,
 		Role:     user.Role,
 		Password: user.Password,
@@ -41,7 +41,7 @@ func UserToEntity(user model.User) entities.User {
 
 func EntityToUser(ent entities.User) model.User {
 	return model.User{
-		ID:       ent.ID.String(),
+		Id:       ent.Id.String(),
 		Email:    ent.Email,
 		Role:     ent.Role,
 		Password: ent.Password,
@@ -50,7 +50,7 @@ func EntityToUser(ent entities.User) model.User {
 
 func UserToRegisterResponse(user model.User) dto.RegisterResponse {
 	return dto.RegisterResponse{
-		ID:    user.ID,
+		Id:    user.Id,
 		Email: user.Email,
 		Role:  user.Role,
 	}

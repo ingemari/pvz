@@ -30,3 +30,11 @@ func IsValidPassword(p string) bool {
 
 	return hasLetter && hasNumber
 }
+
+func IsValidCity(city string) bool {
+	if city == "Москва" || city == "Санкт-Петербург" || city == "Казань" {
+		return true
+	} else {
+		return false
+	}
+}
