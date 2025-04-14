@@ -6,6 +6,7 @@ endif
 MIGRATIONS_DIR ?= ./migrations
 DATABASE_URL := postgres://$(DATABASE_USER):$(DATABASE_PASSWORD)@$(DATABASE_HOST):$(DATABASE_PORT)/$(DATABASE_NAME)?sslmode=$(SSL_MODE)
 PG_CONTAINER_NAME := postgres-dev
+TEST_DB_URL := postgres://postgres:postgres@localhost:5432/pvz_test?sslmode=disable
 
 .PHONY: go
 go:
@@ -39,7 +40,14 @@ migrate_up:
 migrate_down:
 	migrate -path $(MIGRATIONS_DIR) -database '$(DATABASE_URL)' down
 
-.PHONY: pg_rm
-pg_rm:
-	-docker stop $(PG_CONTAINER_NAME)
-	-docker rm $(PG_CONTAINER_NAME)
+.PHONY: test_migrate_up
+test_migrate_up:
+	migrate -path $(MIGRATIONS_DIR) -database '$(TEST_DB_URL)' up
+
+.PHONY: test_migrate_down
+test_migrate_down:
+	migrate -path $(MIGRATIONS_DIR) -database '$(TEST_DB_URL)' down
+
+.PHONY: test
+test:
+	go test ./internal/... -cover

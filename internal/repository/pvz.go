@@ -39,16 +39,13 @@ func (r *PvzRepository) CreatePvz(ctx context.Context, pvz model.Pvz) (model.Pvz
 
 // ну нужен тк можно положиться на референс sql
 func (r *PvzRepository) IsPvz(ctx context.Context, pvz model.Pvz) (bool, error) {
-	id := pvz.Id // ENTITTY!!!
+	query := `SELECT id FROM pvz WHERE id = $1`
 
-	query := `
-		SELECT id
-		FROM pvz
-		WHERE id = $1
-	`
-	row := r.db.QueryRow(ctx, query, id)
-	if row != nil {
-		return true, nil
+	var id string
+	err := r.db.QueryRow(ctx, query, pvz.Id).Scan(&id)
+
+	if err != nil {
+		return false, nil // не нашли — ок
 	}
-	return false, nil
+	return true, nil
 }

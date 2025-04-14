@@ -5,11 +5,14 @@ import (
 	"errors"
 	"log/slog"
 	"pvz/internal/model"
+
+	"github.com/google/uuid"
 )
 
 type ReceptionRepository interface {
 	GetStatus(context.Context, model.Reception) (string, error)
 	CreateReception(ctx context.Context, reception model.Reception) (model.Reception, error)
+	GetInProgressReception(ctx context.Context, pvzId uuid.UUID) (model.Reception, error)
 }
 
 type ReceptionService struct {

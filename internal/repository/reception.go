@@ -7,6 +7,7 @@ import (
 	"pvz/internal/model"
 	"pvz/internal/repository/entities"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -57,6 +58,28 @@ func (r *ReceptionRepository) CreateReception(ctx context.Context, reception mod
 	}
 
 	reception = entities.EntityToReception(ent)
+
+	return reception, nil
+}
+
+func (r *ReceptionRepository) GetInProgressReception(ctx context.Context, pvzId uuid.UUID) (model.Reception, error) {
+	reception := model.Reception{
+		PvzId: pvzId,
+	}
+
+	query := `
+		SELECT id, date_time, status
+		FROM receptions
+		WHERE pvz_id = $1 AND status = 'in_progress'
+		ORDER BY date_time DESC
+		LIMIT 1
+	`
+
+	err := r.db.QueryRow(ctx, query, pvzId).Scan(&reception.Id, &reception.DateTime, &reception.Status)
+	if err != nil {
+		r.logger.Error("Failed to find reception in_progress", "pvz_id", pvzId)
+		return model.Reception{}, err
+	}
 
 	return reception, nil
 }

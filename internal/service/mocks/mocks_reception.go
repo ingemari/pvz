@@ -4,6 +4,7 @@ import (
 	"context"
 	"pvz/internal/model"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -18,5 +19,10 @@ func (m *ReceptionRepository) GetStatus(ctx context.Context, reception model.Rec
 
 func (m *ReceptionRepository) CreateReception(ctx context.Context, reception model.Reception) (model.Reception, error) {
 	args := m.Called(ctx, reception)
+	return args.Get(0).(model.Reception), args.Error(1)
+}
+
+func (m *ReceptionRepository) GetInProgressReception(ctx context.Context, pvzId uuid.UUID) (model.Reception, error) {
+	args := m.Called(ctx, pvzId)
 	return args.Get(0).(model.Reception), args.Error(1)
 }
