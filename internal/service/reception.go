@@ -30,7 +30,7 @@ func (s *ReceptionService) CreateReception(ctx context.Context, reception model.
 	}
 	if !ok {
 		s.logger.Error("Error have not pvz")
-		return model.Reception{}, errors.New("Incorrect pvz_id")
+		return model.Reception{}, errors.New("incorrect pvz_id")
 	}
 	status, err := s.receptionRepo.GetStatus(ctx, reception)
 	if err != nil {

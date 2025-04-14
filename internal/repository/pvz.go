@@ -37,6 +37,7 @@ func (r *PvzRepository) CreatePvz(ctx context.Context, pvz model.Pvz) (model.Pvz
 	return pvz, nil
 }
 
+// ну нужен тк можно положиться на референс sql
 func (r *PvzRepository) IsPvz(ctx context.Context, pvz model.Pvz) (bool, error) {
 	id := pvz.Id // ENTITTY!!!
 
